@@ -55,15 +55,79 @@ function SettingRow({ title, description, children }: SettingRowProps) {
   );
 }
 
-const sessions = [
-  { id: "current", device: "Windows - Chrome", location: "Manila", current: true },
-  { id: "mobile", device: "iPhone - Safari", location: "Quezon City", current: false },
-  { id: "tablet", device: "iPad - Safari", location: "Cebu", current: false },
-];
+type DeviceSession = {
+  id: string;
+  device: string;
+  detail: string;
+  current: boolean;
+};
+
+type NavigatorWithUserAgentData = Navigator & {
+  userAgentData?: {
+    platform?: string;
+    mobile?: boolean;
+    brands?: Array<{ brand: string; version: string }>;
+  };
+};
+
+function detectBrowser(userAgent: string) {
+  if (/Edg\//.test(userAgent)) return "Edge";
+  if (/OPR\//.test(userAgent)) return "Opera";
+  if (/Chrome\//.test(userAgent) && !/Edg\//.test(userAgent)) return "Chrome";
+  if (/Firefox\//.test(userAgent)) return "Firefox";
+  if (/Safari\//.test(userAgent) && !/Chrome\//.test(userAgent)) return "Safari";
+  return "Browser";
+}
+
+function detectDeviceName(userAgent: string, platform: string, isMobile: boolean) {
+  const androidModel = userAgent.match(/Android [^;]+;\s*([^;)]+)\)/)?.[1]?.trim();
+  const iphone = /iPhone/.test(userAgent);
+  const ipad = /iPad/.test(userAgent);
+
+  if (iphone) return "iPhone";
+  if (ipad) return "iPad";
+  if (androidModel) {
+    if (/RMX|realme/i.test(androidModel)) {
+      return `realme ${androidModel.replace(/^realme\s*/i, "")}`.trim();
+    }
+
+    return androidModel;
+  }
+
+  if (/Win/i.test(platform)) return "Windows";
+  if (/Mac/i.test(platform)) return "Mac";
+  if (/Linux/i.test(platform)) return isMobile ? "Android" : "Linux";
+
+  return platform || "Current device";
+}
+
+function currentDeviceSession(): DeviceSession {
+  if (typeof navigator === "undefined") {
+    return {
+      id: "current",
+      device: "Unknown device",
+      detail: "Current session",
+      current: true,
+    };
+  }
+
+  const nav = navigator as NavigatorWithUserAgentData;
+  const userAgent = nav.userAgent || "";
+  const platform = nav.userAgentData?.platform || nav.platform || "";
+  const browser = detectBrowser(userAgent);
+  const device = detectDeviceName(userAgent, platform, Boolean(nav.userAgentData?.mobile));
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Timezone unavailable";
+
+  return {
+    id: "current",
+    device: `${device} - ${browser}`,
+    detail: `${timezone} - Current session`,
+    current: true,
+  };
+}
 
 export default function Settings() {
   const preferences = usePreferences();
-  const [activeSessions, setActiveSessions] = useState(sessions);
   const [notificationPermission, setNotificationPermission] = useState(
     typeof Notification === "undefined" ? "unsupported" : Notification.permission,
   );
@@ -72,24 +136,8 @@ export default function Settings() {
   );
   const { toast } = useToast();
 
-  const deviceSummary = useMemo(() => {
-    if (typeof navigator === "undefined") {
-      return "Unknown device";
-    }
-
-    const platform = navigator.platform || "Current device";
-    const browser = navigator.userAgent.includes("Edg")
-      ? "Edge"
-      : navigator.userAgent.includes("Chrome")
-        ? "Chrome"
-        : navigator.userAgent.includes("Firefox")
-          ? "Firefox"
-          : navigator.userAgent.includes("Safari")
-            ? "Safari"
-            : "Browser";
-
-    return `${platform} - ${browser}`;
-  }, []);
+  const activeSessions = useMemo(() => [currentDeviceSession()], []);
+  const deviceSummary = activeSessions[0]?.device ?? "Unknown device";
 
   useEffect(() => {
     function updateOnlineStatus() {
@@ -337,27 +385,20 @@ export default function Settings() {
                       <div>
                         <p className="text-sm font-medium">{session.device}</p>
                         <p className="text-xs text-muted-foreground">
-                          {session.location}
-                          {session.current ? " - Current session" : ""}
+                          {session.detail}
                         </p>
                       </div>
-                      {!session.current && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setActiveSessions((current) =>
-                              current.filter((item) => item.id !== session.id),
-                            )
-                          }
-                        >
-                          Revoke
-                        </Button>
+                      {session.current && (
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                          Active
+                        </span>
                       )}
                     </div>
                   ))}
                 </div>
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                  Only real browser-detected session data is shown here. Other devices appear only after the app receives real login-session data.
+                </p>
               </Card>
             </div>
           </div>
