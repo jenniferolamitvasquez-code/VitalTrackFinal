@@ -1,0 +1,24 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "node ./scripts/check-pnpm.mjs",
+    "dev": "corepack pnpm -r --parallel --filter @workspace/api-server --filter @workspace/vital-track dev",
+    "dev:api": "corepack pnpm --filter @workspace/api-server dev",
+    "dev:web": "corepack pnpm --filter @workspace/vital-track dev",
+    "build": "corepack pnpm run typecheck && corepack pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "corepack pnpm run typecheck:libs && corepack pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+  },
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.8.3",
+    "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "init": "^0.1.2",
+    "mongoose": "^9.6.2"
+  }
+}
