@@ -1,11 +1,11 @@
 export const defaultProfile = {
-  fullName: "Alex Morgan",
-  email: "alex.morgan@example.com",
-  phone: "+1 (555) 014-2748",
-  address: "118 Harbor View, Seattle, WA",
-  birthday: "1994-08-12",
-  bio: "Operations lead focused on keeping teams aligned, systems healthy, and reports easy to trust.",
-  role: "Admin",
+  fullName: "",
+  email: "",
+  phone: "",
+  address: "",
+  birthday: "",
+  bio: "",
+  role: "Premium",
 };
 
 export const recentActivities = [
@@ -25,4 +25,3 @@ export const recentActivities = [
     time: "Yesterday",
   },
 ];
-

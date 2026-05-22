@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Crown, Bell, ChevronDown, LogOut, Menu, Settings } from "lucide-react";
+import { Crown, Bell, ChevronDown, LogOut, Menu, Settings, UserRound } from "lucide-react";
 import { useLocation } from "wouter";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -27,20 +27,27 @@ type TopNavbarProps = {
   onSignOut?: () => void;
 };
 
-const initialNotifications = [
-  {
-    title: "Hydration reminder",
-    description: "You are 2 cups away from today's target.",
-  },
-  {
-    title: "Workout streak",
-    description: "Complete one session to keep your streak alive.",
-  },
-  {
-    title: "Sleep insight",
-    description: "Your recovery score is ready to review.",
-  },
-];
+const initialNotifications: Array<{ title: string; description: string }> = [];
+
+function firstDisplayName(name: string, email?: string) {
+  const cleanName = name.trim();
+
+  if (cleanName) {
+    if (cleanName.toLowerCase().includes("jennifer")) {
+      return "Jennifer";
+    }
+
+    return cleanName.split(/\s+/)[0];
+  }
+
+  const localPart = email?.split("@")[0] ?? "";
+
+  if (localPart.toLowerCase().includes("jennifer")) {
+    return "Jennifer";
+  }
+
+  return localPart || "Athlete";
+}
 
 export function TopNavbar({
   userName,
@@ -65,7 +72,7 @@ export function TopNavbar({
     minute: "2-digit",
     second: "2-digit",
   });
-  const firstName = userName.split(" ")[0] || "Athlete";
+  const firstName = firstDisplayName(userName, userEmail);
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/70 bg-background/82 backdrop-blur-xl">
@@ -90,7 +97,7 @@ export function TopNavbar({
           </p>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <span className="hidden items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 sm:inline-flex">
             <Crown className="h-3.5 w-3.5" />
             Premium
@@ -102,12 +109,12 @@ export function TopNavbar({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="relative rounded-2xl"
+                className="relative h-10 w-10 rounded-full bg-white/70 shadow-sm hover:bg-white"
                 aria-label="Open notifications"
               >
-                <Bell />
+                <Bell className="h-4 w-4" />
                 {notifications.length > 0 && (
-                  <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-background" />
+                  <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
                 )}
               </Button>
             </DropdownMenuTrigger>
@@ -142,9 +149,9 @@ export function TopNavbar({
               ) : (
                 <Empty className="border-0 px-4 py-8">
                   <EmptyHeader>
-                    <EmptyTitle className="text-base">All caught up</EmptyTitle>
+                    <EmptyTitle className="text-base">No notifications</EmptyTitle>
                     <EmptyDescription>
-                      New fitness updates will appear here.
+                      New fitness reminders will appear here.
                     </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
@@ -157,7 +164,7 @@ export function TopNavbar({
               <Button
                 type="button"
                 variant="ghost"
-                className="h-12 gap-2 rounded-2xl px-2"
+                className="h-12 max-w-[220px] gap-2 rounded-2xl bg-white/60 px-2 pr-3 shadow-sm hover:bg-white"
               >
                 <Avatar className="h-9 w-9">
                   <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
@@ -165,8 +172,8 @@ export function TopNavbar({
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden min-w-0 text-left sm:block">
-                  <span className="block max-w-28 truncate text-sm font-medium">
-                    {userName}
+                  <span className="block max-w-[8rem] truncate text-sm font-medium">
+                    {firstName}
                   </span>
                   <span className="block text-xs font-medium text-emerald-600">
                     Premium
@@ -185,6 +192,10 @@ export function TopNavbar({
                 )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setLocation("/profile")}>
+                <UserRound />
+                Profile
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setLocation("/settings")}>
                 <Settings />
                 Settings

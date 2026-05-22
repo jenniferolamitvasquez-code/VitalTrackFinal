@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, CircleHelp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { LOCAL_AUTH_USER_KEY, type LocalUser } from "@/lib/local-auth";
 
 const FAQS = [
   {
@@ -125,6 +126,22 @@ const FAQS = [
   },
 ];
 
+function readFirstName() {
+  try {
+    const raw = window.localStorage.getItem(LOCAL_AUTH_USER_KEY);
+    const user = raw ? JSON.parse(raw) as Partial<LocalUser> : null;
+    const name = user?.name?.trim() || user?.email?.split("@")[0] || "";
+
+    if (name.toLowerCase().includes("jennifer")) {
+      return "Jennifer";
+    }
+
+    return name.split(/\s+/)[0] || "there";
+  } catch {
+    return "there";
+  }
+}
+
 function FAQItem({
   question,
   answer,
@@ -171,6 +188,21 @@ function FAQItem({
 
 export default function Support() {
   const [expandedId, setExpandedId] = useState<number | null>(1);
+  const [firstName, setFirstName] = useState(readFirstName);
+
+  useEffect(() => {
+    function syncName() {
+      setFirstName(readFirstName());
+    }
+
+    window.addEventListener("vital-track-user-updated", syncName);
+    window.addEventListener("storage", syncName);
+
+    return () => {
+      window.removeEventListener("vital-track-user-updated", syncName);
+      window.removeEventListener("storage", syncName);
+    };
+  }, []);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -180,7 +212,7 @@ export default function Support() {
             <CircleHelp className="h-7 w-7" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-bold">Frequently Asked Questions</h1>
+            <h1 className="font-display text-2xl font-bold">Hi, {firstName}</h1>
             <p className="mt-1 max-w-2xl text-sm text-white/75">
               Tap a question and Vital Tracker answers right away.
             </p>

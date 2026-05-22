@@ -22,12 +22,13 @@ import { defaultProfile, recentActivities } from "@/utils/profile";
 type ProfileForm = typeof defaultProfile;
 
 const PROFILE_STORAGE_PREFIX = "vital-track-profile:";
+const LOCAL_AUTH_ACCOUNTS_KEY = "vital-track-local-accounts";
 
 function profileFromUser(user: LocalUser | null): ProfileForm {
   return {
     ...defaultProfile,
-    fullName: user?.name ?? defaultProfile.fullName,
-    email: user?.email ?? defaultProfile.email,
+    fullName: user?.name ?? "",
+    email: user?.email ?? "",
     role: "Premium",
   };
 }
@@ -75,11 +76,18 @@ function loadProfile(user: LocalUser | null): ProfileForm {
       return baseProfile;
     }
 
+    const stored = JSON.parse(raw) as Partial<ProfileForm>;
+    const legacyDemoProfile =
+      stored.fullName === "Alex Morgan" ||
+      stored.email === "alex.morgan@example.com";
+
+    if (legacyDemoProfile) {
+      return baseProfile;
+    }
+
     return {
       ...baseProfile,
-      ...(JSON.parse(raw) as Partial<ProfileForm>),
-      fullName: user?.name ?? baseProfile.fullName,
-      email: user?.email ?? baseProfile.email,
+      ...stored,
     };
   } catch {
     return baseProfile;
@@ -92,6 +100,40 @@ function saveProfile(user: LocalUser | null, profile: ProfileForm) {
   }
 
   window.localStorage.setItem(storageKeyFor(user), JSON.stringify(profile));
+}
+
+function saveAuthUser(user: LocalUser | null, profile: ProfileForm) {
+  if (!user || typeof window === "undefined") {
+    return user;
+  }
+
+  const nextUser = {
+    ...user,
+    name: profile.fullName.trim() || user.name,
+    email: profile.email.trim() || user.email,
+  };
+
+  window.localStorage.setItem(LOCAL_AUTH_USER_KEY, JSON.stringify(nextUser));
+
+  try {
+    const raw = window.localStorage.getItem(LOCAL_AUTH_ACCOUNTS_KEY);
+    const accounts = raw ? JSON.parse(raw) as Array<LocalUser & { password?: string }> : [];
+    const updatedAccounts = accounts.map((account) =>
+      account.id === user.id || account.email === user.email
+        ? { ...account, name: nextUser.name, email: nextUser.email }
+        : account,
+    );
+    window.localStorage.setItem(LOCAL_AUTH_ACCOUNTS_KEY, JSON.stringify(updatedAccounts));
+  } catch {
+    // Profile still saves even if legacy account data cannot be parsed.
+  }
+
+  window.dispatchEvent(new Event("vital-track-user-updated"));
+  return nextUser;
+}
+
+function displayValue(value: string) {
+  return value.trim() || "Not set";
 }
 
 export default function Profile() {
@@ -108,7 +150,7 @@ export default function Profile() {
 
   useEffect(() => {
     const token = localStorage.getItem(LOCAL_AUTH_TOKEN_KEY);
-    if (!token) {
+    if (!token || token.startsWith("local:")) {
       return;
     }
 
@@ -139,14 +181,17 @@ export default function Profile() {
   }, [avatarUrl]);
 
   const initials = useMemo(
-    () =>
-      profile.fullName
+    () => {
+      const source = profile.fullName || profile.email || "U";
+
+      return source
         .split(" ")
         .map((part) => part[0])
         .join("")
         .slice(0, 2)
-        .toUpperCase(),
-    [profile.fullName],
+        .toUpperCase();
+    },
+    [profile.email, profile.fullName],
   );
 
   const completion = useMemo(() => {
@@ -217,6 +262,10 @@ export default function Profile() {
             onClick={() => {
               if (isEditing) {
                 saveProfile(authUser, profile);
+                const nextUser = saveAuthUser(authUser, profile);
+                if (nextUser) {
+                  setAuthUser(nextUser);
+                }
                 toast({ title: "Profile saved" });
               }
               setIsEditing((value) => !value);
@@ -241,12 +290,12 @@ export default function Profile() {
               <div className="pb-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-2xl font-display font-bold">
-                    {profile.fullName}
+                    {displayValue(profile.fullName)}
                   </h2>
                   <Badge>{profile.role}</Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {profile.email}
+                  {displayValue(profile.email)}
                 </p>
                 {isUploadingAvatar && (
                   <p className="mt-1 text-xs font-medium text-primary">
@@ -276,14 +325,12 @@ export default function Profile() {
                 <Input
                   id="profile-name"
                   value={profile.fullName}
-                  disabled
+                  disabled={!isEditing}
+                  placeholder="Enter your name"
                   onChange={(event) =>
                     updateProfile("fullName", event.target.value)
                   }
                 />
-                <p className="text-xs text-muted-foreground">
-                  Uses the signed-in account name.
-                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="profile-email">Email</Label>
@@ -291,14 +338,12 @@ export default function Profile() {
                   id="profile-email"
                   type="email"
                   value={profile.email}
-                  disabled
+                  disabled={!isEditing}
+                  placeholder="Enter your email"
                   onChange={(event) =>
                     updateProfile("email", event.target.value)
                   }
                 />
-                <p className="text-xs text-muted-foreground">
-                  Uses the signed-in account email.
-                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="profile-phone">Phone number</Label>
@@ -306,6 +351,7 @@ export default function Profile() {
                   id="profile-phone"
                   value={profile.phone}
                   disabled={!isEditing}
+                  placeholder="Enter phone number"
                   onChange={(event) =>
                     updateProfile("phone", event.target.value)
                   }
@@ -329,6 +375,7 @@ export default function Profile() {
                   id="profile-address"
                   value={profile.address}
                   disabled={!isEditing}
+                  placeholder="Enter address"
                   onChange={(event) =>
                     updateProfile("address", event.target.value)
                   }
@@ -340,6 +387,7 @@ export default function Profile() {
                   id="profile-bio"
                   value={profile.bio}
                   disabled={!isEditing}
+                  placeholder="Tell something about yourself"
                   className="min-h-28"
                   onChange={(event) => updateProfile("bio", event.target.value)}
                 />
@@ -377,22 +425,24 @@ export default function Profile() {
             <h3 className="text-sm font-semibold">Contact summary</h3>
             <div className="mt-4 space-y-4 text-sm">
               {[
-                { icon: Mail, label: profile.email },
-                { icon: Phone, label: profile.phone },
-                { icon: MapPin, label: profile.address },
+                { icon: Mail, label: displayValue(profile.email) },
+                { icon: Phone, label: displayValue(profile.phone) },
+                { icon: MapPin, label: displayValue(profile.address) },
                 {
                   icon: Cake,
-                  label: new Date(profile.birthday).toLocaleDateString(
-                    "en-US",
-                    {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    },
-                  ),
+                  label: profile.birthday
+                    ? new Date(`${profile.birthday}T12:00:00`).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        },
+                      )
+                    : "Not set",
                 },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex items-center gap-3">
+              ].map(({ icon: Icon, label }, index) => (
+                <div key={`${label}-${index}`} className="flex items-center gap-3">
                   <Icon className="h-4 w-4 text-primary" />
                   <span>{label}</span>
                 </div>

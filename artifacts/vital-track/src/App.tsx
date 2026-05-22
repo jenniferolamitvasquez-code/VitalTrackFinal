@@ -35,6 +35,7 @@ const HeartRate = React.lazy(() => import("@/pages/HeartRate"));
 const Inventory = React.lazy(() => import("@/pages/Inventory"));
 const Landing = React.lazy(() => import("@/pages/Landing"));
 const NotFound = React.lazy(() => import("@/pages/not-found"));
+const Profile = React.lazy(() => import("@/pages/Profile"));
 const Reports = React.lazy(() => import("@/pages/Reports"));
 const Settings = React.lazy(() => import("@/pages/Settings"));
 const Sleep = React.lazy(() => import("@/pages/Sleep"));
@@ -517,7 +518,7 @@ function AppRoutes() {
               <Route path="/analytics" component={() => <ProtectedRoute component={Analytics} />} />
               <Route path="/inventory" component={() => <ProtectedRoute component={Inventory} />} />
               <Route path="/reports" component={() => <ProtectedRoute component={Reports} />} />
-              <Route path="/profile" component={() => <Redirect to="/dashboard" />} />
+              <Route path="/profile" component={() => <ProtectedRoute component={Profile} />} />
               <Route path="/settings" component={() => <ProtectedRoute component={Settings} />} />
               <Route path="/calories" component={() => <ProtectedRoute component={Calories} />} />
               <Route path="/steps" component={() => <ProtectedRoute component={Steps} />} />
@@ -551,7 +552,7 @@ function LocalAppRoutes() {
             <Route path="/analytics" component={() => <LocalProtectedRoute component={Analytics} />} />
             <Route path="/inventory" component={() => <LocalProtectedRoute component={Inventory} />} />
             <Route path="/reports" component={() => <LocalProtectedRoute component={Reports} />} />
-            <Route path="/profile" component={() => <Redirect to="/dashboard" />} />
+            <Route path="/profile" component={() => <LocalProtectedRoute component={Profile} />} />
             <Route path="/settings" component={() => <LocalProtectedRoute component={Settings} />} />
             <Route path="/calories" component={() => <LocalProtectedRoute component={Calories} />} />
             <Route path="/steps" component={() => <LocalProtectedRoute component={Steps} />} />
@@ -584,7 +585,7 @@ function DemoAppRoutes() {
             <Route path="/analytics" component={() => <DemoProtectedRoute component={Analytics} />} />
             <Route path="/inventory" component={() => <DemoProtectedRoute component={Inventory} />} />
             <Route path="/reports" component={() => <DemoProtectedRoute component={Reports} />} />
-            <Route path="/profile" component={() => <Redirect to="/dashboard" />} />
+            <Route path="/profile" component={() => <DemoProtectedRoute component={Profile} />} />
             <Route path="/settings" component={() => <DemoProtectedRoute component={Settings} />} />
             <Route path="/calories" component={() => <DemoProtectedRoute component={Calories} />} />
             <Route path="/steps" component={() => <DemoProtectedRoute component={Steps} />} />
