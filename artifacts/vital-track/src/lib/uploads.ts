@@ -1,4 +1,5 @@
 import { LOCAL_AUTH_TOKEN_KEY } from "@/lib/local-auth";
+import { apiUrl } from "@/lib/api-url";
 
 export type UploadedAsset = {
   assetId: string;
@@ -18,7 +19,7 @@ export async function uploadAsset(file: File, folder?: string) {
   }
 
   const token = localStorage.getItem(LOCAL_AUTH_TOKEN_KEY);
-  const response = await fetch("/api/uploads", {
+  const response = await fetch(apiUrl("/api/uploads"), {
     method: "POST",
     headers: token
       ? {
@@ -41,4 +42,3 @@ export async function uploadAsset(file: File, folder?: string) {
 
   return payload.asset;
 }
-

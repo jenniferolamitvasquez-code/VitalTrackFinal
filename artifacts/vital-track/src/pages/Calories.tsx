@@ -104,6 +104,7 @@ function loggedAtForDate(dateStr: string) {
 export default function Calories() {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(todayStr());
+  const [showFoodSuggestions, setShowFoodSuggestions] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -123,6 +124,18 @@ export default function Calories() {
     () => findFoodPreset(watchedFoodName),
     [watchedFoodName],
   );
+  const foodSuggestions = useMemo(() => {
+    const term = watchedFoodName.trim().toLowerCase();
+
+    if (!term) {
+      return FOOD_PRESETS;
+    }
+
+    return FOOD_PRESETS.filter((preset) =>
+      preset.label.toLowerCase().includes(term) ||
+      preset.keywords.some((keyword) => keyword.includes(term)),
+    );
+  }, [watchedFoodName]);
 
   useEffect(() => {
     if (!matchedPreset) {
@@ -175,6 +188,7 @@ export default function Calories() {
           queryClient.invalidateQueries({ queryKey: getGetWeeklySummaryQueryKey() });
           toast({ title: "Food logged", description: `${values.foodName} added.` });
           form.reset({ foodName: "", servings: 1, calories: 0, mealType: "breakfast", protein: null, carbs: null, fat: null });
+          setShowFoodSuggestions(false);
           setOpen(false);
         },
         onError: () => toast({ title: "Error", description: "Failed to log food.", variant: "destructive" }),
@@ -225,15 +239,34 @@ export default function Calories() {
                       <Input
                         data-testid="input-food-name"
                         placeholder="e.g. Rice, chicken, coffee"
-                        list="food-presets"
+                        autoComplete="off"
                         {...field}
+                        onFocus={() => setShowFoodSuggestions(true)}
+                        onBlur={() => window.setTimeout(() => setShowFoodSuggestions(false), 120)}
                       />
                     </FormControl>
-                    <datalist id="food-presets">
-                      {FOOD_PRESETS.map((preset) => (
-                        <option key={preset.label} value={preset.label} />
-                      ))}
-                    </datalist>
+                    {showFoodSuggestions && foodSuggestions.length > 0 && (
+                      <div className="mt-2 max-h-40 overflow-y-auto rounded-xl border border-border bg-background p-1 shadow-sm">
+                        {foodSuggestions.map((preset) => (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-secondary"
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              form.setValue("foodName", preset.label, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              });
+                              setShowFoodSuggestions(false);
+                            }}
+                          >
+                            <span className="font-medium text-foreground">{preset.label}</span>
+                            <span className="text-xs text-muted-foreground">{preset.calories} kcal</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {matchedPreset
                         ? `Matched ${matchedPreset.label}. Calories and macros update per serving.`

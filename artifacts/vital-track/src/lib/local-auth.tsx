@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
+import { apiUrl } from "@/lib/api-url";
 
 export const LOCAL_AUTH_TOKEN_KEY = "vital-track-token";
 export const LOCAL_AUTH_USER_KEY = "vital-track-user";
@@ -84,7 +85,7 @@ export function LocalAuthProvider({
       }
     }
 
-    void fetch("/api/auth/me", {
+    void fetch(apiUrl("/api/auth/me"), {
       headers: {
         authorization: `Bearer ${token}`,
       },
@@ -167,7 +168,7 @@ export function LocalAuthProvider({
     const token = localStorage.getItem(LOCAL_AUTH_TOKEN_KEY);
 
     if (token) {
-      await fetch("/api/auth/logout", {
+      await fetch(apiUrl("/api/auth/logout"), {
         method: "POST",
         headers: {
           authorization: `Bearer ${token}`,
@@ -340,7 +341,7 @@ function signInWithLocalAccount(input: {
 }
 
 async function requestAuth<T>(path: string, init: RequestInit): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     headers: {
       "content-type": "application/json",

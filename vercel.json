@@ -1,0 +1,12 @@
+{
+  "framework": "vite",
+  "installCommand": "corepack enable && corepack pnpm install --frozen-lockfile",
+  "buildCommand": "corepack pnpm --filter @workspace/vital-track build",
+  "outputDirectory": "artifacts/vital-track/dist/public",
+  "rewrites": [
+    {
+      "source": "/((?!api/.*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

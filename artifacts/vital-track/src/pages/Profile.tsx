@@ -16,6 +16,7 @@ import {
   LOCAL_AUTH_USER_KEY,
   type LocalUser,
 } from "@/lib/local-auth";
+import { apiUrl } from "@/lib/api-url";
 import { uploadAsset } from "@/lib/uploads";
 import { defaultProfile, recentActivities } from "@/utils/profile";
 
@@ -154,7 +155,7 @@ export default function Profile() {
       return;
     }
 
-    void fetch("/api/auth/me", {
+    void fetch(apiUrl("/api/auth/me"), {
       headers: { authorization: `Bearer ${token}` },
     })
       .then(async (response) => {
