@@ -69,10 +69,22 @@ catalog:
 autoInstallPeers: false
 
 onlyBuiltDependencies:
+  - '@clerk/shared'
   - '@swc/core'
   - esbuild
   - msw
+  - mongodb-memory-server
+  - sharp
   - unrs-resolver
+
+allowBuilds:
+  '@clerk/shared': true
+  '@swc/core': true
+  esbuild: true
+  msw: true
+  mongodb-memory-server: true
+  sharp: true
+  unrs-resolver: true
 
 overrides:
   # replit uses linux-x64 only, we can exclude all other platforms
