@@ -41,8 +41,7 @@ if (isClerkEnabled) {
 app.use(
   cors({
     credentials: true,
-    origin: process.env.CORS_ORIGIN?.split(",").map((origin) => origin.trim()) ??
-      true,
+    origin: getCorsOrigins(),
   }),
 );
 app.use(express.json());
@@ -73,3 +72,11 @@ const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 app.use(errorHandler);
 
 export default app;
+
+function getCorsOrigins(): string[] | true {
+  const origins = process.env.CORS_ORIGIN?.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return origins?.length ? origins : true;
+}
