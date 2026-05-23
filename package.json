@@ -10,9 +10,9 @@
     "dev": "corepack pnpm -r --parallel --filter @workspace/api-server --filter @workspace/vital-track dev",
     "dev:api": "corepack pnpm --filter @workspace/api-server dev",
     "dev:web": "corepack pnpm --filter @workspace/vital-track dev",
-    "build": "corepack pnpm run typecheck && corepack pnpm -r --if-present run build",
+    "build": "corepack pnpm run typecheck && corepack pnpm -r --filter @workspace/api-server --filter @workspace/vital-track --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "corepack pnpm run typecheck:libs && corepack pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "corepack pnpm run typecheck:libs && corepack pnpm -r --filter \"./backend\" --filter \"./frontend\" --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,
   "devDependencies": {

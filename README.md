@@ -4,17 +4,17 @@
 
 This repository is a pnpm workspace with two deployable apps:
 
-- Backend API: `artifacts/api-server`
-- Frontend web app: `artifacts/vital-track`
+- Backend API: `backend`
+- Frontend web app: `frontend`
 
 The repo already includes `render.yaml` for Render and `vercel.json` for Vercel.
 
 ## Backend on Render
 
-Use the repository root when connecting the project to Render. The existing `render.yaml` uses these commands:
+Use the `backend` folder as the Root Directory when connecting the project to Render. The existing root `render.yaml` also works if you deploy from the repository root.
 
-- Build Command: `corepack enable && corepack pnpm install --frozen-lockfile && corepack pnpm --filter @workspace/api-server build`
-- Start Command: `corepack pnpm --filter @workspace/api-server start`
+- Build Command: `cd .. && corepack enable && corepack pnpm install --frozen-lockfile && corepack pnpm --filter @workspace/api-server build`
+- Start Command: `cd .. && corepack pnpm --filter @workspace/api-server start`
 - Health Check Path: `/api/healthz`
 
 Set these environment variables in Render:
@@ -50,14 +50,14 @@ It should return:
 
 ## Frontend on Vercel
 
-Import the same GitHub repository in Vercel. Use the repository root and keep the existing `vercel.json`.
+Import the same GitHub repository in Vercel. Use the `frontend` folder as the Root Directory.
 
 The existing Vercel config uses:
 
 - Framework: Vite
-- Install Command: `corepack enable && corepack pnpm install --frozen-lockfile`
-- Build Command: `corepack pnpm --filter @workspace/vital-track build`
-- Output Directory: `artifacts/vital-track/dist/public`
+- Install Command: `cd .. && corepack enable && corepack pnpm install --frozen-lockfile`
+- Build Command: `cd .. && corepack pnpm --filter @workspace/vital-track build`
+- Output Directory: `dist/public`
 
 Set these environment variables in Vercel:
 
