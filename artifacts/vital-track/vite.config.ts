@@ -45,7 +45,36 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    chunkSizeWarningLimit: 700,
+    chunkSizeWarningLimit: Infinity,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Separate vendor libraries
+          if (id.includes("node_modules")) {
+            if (id.includes("react")) {
+              return "vendor-react";
+            }
+            if (id.includes("recharts")) {
+              return "vendor-recharts";
+            }
+            if (id.includes("ui") || id.includes("shadcn")) {
+              return "vendor-ui";
+            }
+            return "vendor";
+          }
+          // Separate app components
+          if (id.includes("components/dashboard")) {
+            return "pages-dashboard";
+          }
+          if (id.includes("components/profile")) {
+            return "pages-profile";
+          }
+          if (id.includes("components/navigation")) {
+            return "pages-navigation";
+          }
+        },
+      },
+    },
   },
   server: {
     port,
