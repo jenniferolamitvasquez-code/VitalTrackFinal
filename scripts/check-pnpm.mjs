@@ -2,7 +2,7 @@ import { rmSync } from "node:fs";
 
 const userAgent = process.env.npm_config_user_agent ?? "";
 
-if (!userAgent.startsWith("pnpm/")) {
+if (userAgent && !userAgent.includes("pnpm/")) {
   console.error("Use pnpm instead");
   process.exit(1);
 }
